@@ -1,0 +1,8 @@
+name: pr-issue-link
+on: { pull_request: { types: [opened, edited, synchronize] } }
+jobs:
+  pr-issue-link:
+    runs-on: ubuntu-latest
+    steps:
+      - env: { BODY: "${{ github.event.pull_request.body }}" }
+        run: echo "$BODY" | grep -Eiq '(clos|fix|resolv)e?[sd]? +#[0-9]+' || { echo "PR must close an issue — add 'Closes #N'"; exit 1; }
