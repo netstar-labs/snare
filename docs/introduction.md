@@ -2,11 +2,11 @@
 
 Every phishing kit begins with a lie told in a domain name. `paypa1.com` for
 `paypal.com`; `papyal` for `paypal`; `micros0ft`, `gooogle`, `arnazon` — a single
-keystroke off a name you trust, close enough that the eye slides right over it. The
-canonical tool in this space is **dnstwist**, and it works the attacker's way
-round: give it a brand and it *generates* the thousands of permutations a squatter
-might register, so you can go hunting for them. twist is named for that lineage but
-turned to face the other direction. It does not generate — it **detects**. Hand it
+keystroke off a name you trust, close enough that the eye slides right over it. Squat-hunting
+has two directions. The attacker's way round is *generative* — give a tool a brand
+and it *generates* the thousands of permutations a squatter might register, so you
+can go hunting for them (that is twist's counter, `twister`). twist faces the other
+direction. It does not generate — it **detects**. Hand it
 the string in front of you and it answers one question: *is this a near-miss for
 something on my list, and how near?*
 

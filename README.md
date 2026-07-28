@@ -2,8 +2,8 @@
 
 Edit-distance typosquat detection for Go — **build a `Set` over your targets, query
 for the nearest within a small edit budget**, pure standard library, no
-dependencies. Named after `dnstwist`, but where that tool *generates* look-alike
-domains to hunt for, twist *detects* them: query → nearest target. It is the
+dependencies. twist *detects* typosquats — query → nearest target; it is the counter
+to `twister`, which *generates* the look-alike domains to hunt for. It is the
 edit-distance sibling of `ditto` — the same build-index-then-query shape,
 Damerau-Levenshtein (OSA) instead of a locality-sensitive hash.
 

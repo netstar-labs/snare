@@ -4,9 +4,9 @@
 distance. Build a `Set` over a list of target strings, then query for the nearest
 target within a small edit budget. It is the edit-distance sibling of `ditto` (which
 finds near-duplicate documents by SimHash): the same build-index-then-query shape,
-Damerau-Levenshtein (OSA) instead of a locality-sensitive hash. Named after `dnstwist`,
-but where that tool *generates* look-alike domains to hunt for, twist *detects* them:
-query → nearest target.
+Damerau-Levenshtein (OSA) instead of a locality-sensitive hash. twist *detects*
+typosquats — query → nearest target — the counter to `twister`, which *generates* the
+look-alike domains to hunt for.
 
 **Why it exists.** A typosquat is a name one keystroke off a trusted one —
 `paypa1`, `papyal`, `gooogle`, `micros0ft` — the workhorse of phishing and brand
