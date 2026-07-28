@@ -1,8 +1,8 @@
 // Package twist detects typosquats by edit distance: build a [Set] over a list of
 // target strings, then ask for the [Set.Nearest] target to a query within a small
-// edit budget. The name follows dnstwist, the canonical typosquat tool — but where
-// dnstwist *generates* look-alike permutations offensively, twist *detects* them:
-// query → nearest target, the defensive side of the same lineage. It is the
+// edit budget. twist *detects* typosquats: query → nearest target, the defensive
+// side of the problem — its counter twister *generates* the look-alike permutations.
+// It is the
 // edit-distance sibling of ditto (near-duplicate documents by SimHash): the same
 // build-index-then-query shape, Damerau-Levenshtein (OSA) instead of a locality-sensitive
 // hash.
