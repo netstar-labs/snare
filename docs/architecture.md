@@ -94,20 +94,18 @@ Let *m* = query length, *L* = target length, *B* = number of in-band targets.
 
 ## Deliberately out (YAGNI)
 
-The scope is the "smallest real capability." Three tempting extensions are left out
-on purpose, each recorded as a future upgrade rather than pre-built:
+The v0.1 core is the "smallest real capability." v0.2 added three opt-in extensions —
+the BK-tree `Set.Index` for sublinear *exact* lookup, the `DomainSet` tld-swap check,
+and confusability-weighted `NearestWeighted` — each in its own file, the core untouched.
+Two tempting extensions remain out on purpose:
 
-- **No BK-tree / SymSpell index.** Brute force plus length-bucket pruning is
-  microsecond-class over a curated list; a metric-tree or deletion-index only starts
-  to pay when the target list or query volume grows large. `bench_test.go` at 1e2 /
-  1e3 / 1e4 targets is the marker for when that day arrives — build it then, not now.
 - **No combosquat / token logic.** `paypal-secure` is a brand token plus a keyword —
   a different signal (token match, not edit distance) — and is correctly not a twist
-  hit. Combosquat detection belongs to a token-aware consumer, not this metric.
+  hit. Combosquat detection belongs to a token-aware consumer (or `twister`), not this metric.
 - **No skeleton fold.** twist is edit-distance only; homoglyph look-alikes are the
-  Unicode UTS-39 *skeleton* metric, a different distance. When a skeleton function
-  lands, `Nearest(skeleton(q))` gives the homoglyph ∪ typosquat union for free —
-  deferred until that exists rather than half-built here.
+  Unicode UTS-39 *skeleton* metric, a different distance owned by the sibling `unmask`.
+  `NearestWeighted` can price a confusable substitution cheaply, but the skeleton JOIN
+  itself lives in `unmask`, not here.
 
 ## Consumer wiring (future work)
 
