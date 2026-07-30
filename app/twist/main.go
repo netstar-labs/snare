@@ -1,7 +1,8 @@
 // Command twist detects typosquats by edit distance: given a list of target
 // strings, it reports each query's nearest target within a small edit budget.
 //
-//	twist near -t <targets-file> [-all] [queries...]   # nearest target per query (stdin if no args)
+//	twist near -t <targets-file> [-all] [-index] [queries...]   # nearest target per query (stdin if no args)
+//	twist domain -t <brands-file> [-all] [domains...]           # tld-swap / typo detection over registrable domains
 //	twist version
 //
 // Targets are one per line. Queries are the command arguments, or one per line on
@@ -35,6 +36,8 @@ func main() {
 	switch os.Args[1] {
 	case "near":
 		err = near(os.Args[2:])
+	case "domain":
+		err = domainCmd(os.Args[2:])
 	case "version", "-version", "--version", "-v":
 		fmt.Printf("twist %s (%s)\n", version, build)
 	default:
@@ -47,7 +50,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: twist <near|version> [flags] [queries...]")
+	fmt.Fprintln(os.Stderr, "usage: twist <near|domain|version> [flags] [queries...]")
 	os.Exit(2)
 }
 
@@ -55,6 +58,7 @@ func near(args []string) error {
 	fs := flag.NewFlagSet("near", flag.ExitOnError)
 	tfile := fs.String("t", "", "targets file, newline-delimited (required)")
 	all := fs.Bool("all", false, "also print queries with no near-miss, marked with -")
+	useIndex := fs.Bool("index", false, "query via the BK-tree index (same result, sublinear on a large list)")
 	fs.Parse(args)
 
 	if *tfile == "" {
@@ -65,6 +69,12 @@ func near(args []string) error {
 		return err
 	}
 	s := twist.New(targets)
+	// nearest is Set.Nearest, or the equivalent BK-tree lookup with -index — identical
+	// (target, dist, ok), sublinear instead of a bucket scan for a large target list.
+	nearest := s.Nearest
+	if *useIndex {
+		nearest = s.Index().Nearest
+	}
 
 	w := bufio.NewWriter(os.Stdout)
 	defer w.Flush()
@@ -72,7 +82,7 @@ func near(args []string) error {
 		if q == "" {
 			return
 		}
-		if near, dist, ok := s.Nearest(q); ok {
+		if near, dist, ok := nearest(q); ok {
 			fmt.Fprintf(w, "%s\t%s\t%d\n", q, near, dist)
 		} else if *all {
 			fmt.Fprintf(w, "%s\t-\t-\n", q)

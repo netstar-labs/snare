@@ -84,8 +84,8 @@ With no host it just builds the package under `build/install/`.
 
 twist is brute force plus length-bucket pruning — microsecond-class over a curated
 list of hundreds to low thousands of targets. If the target list or query volume
-grows large enough that `Nearest` shows up in a profile, the upgrade is a BK-tree or
-SymSpell deletion index; `bench_test.go` (1e2 / 1e3 / 1e4 targets) is the yardstick
-for when that day arrives. Combosquats (`paypal-secure`) and homoglyphs are out of
+grows large enough that `Nearest` shows up in a profile, reach for the v0.2 BK-tree
+`Set.Index` — the same exact result, sublinear lookup (`bench_test.go` at 1e2 / 1e3 /
+1e4 targets is the yardstick). Combosquats (`paypal-secure`) and homoglyphs are out of
 scope by design — a different signal and a different metric respectively; see
 [architecture.md](architecture.md) § "Deliberately out (YAGNI)".

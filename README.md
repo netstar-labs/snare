@@ -46,8 +46,11 @@ printf 'paypa1\n' | go run ./app/twist near -t targets.txt   # queries on stdin
 |---|---|
 | [twist.go](twist.go) | `Set`, `New` (dedup + length buckets), `Nearest`, and the `kFor` length-relative budget policy |
 | [distance.go](distance.go) | `editDistance` — bounded Damerau-Levenshtein (OSA) over runes; three-row DP with length and row-min prunes |
+| [domainset.go](domainset.go) | v0.2 — `DomainSet.Check`: tld-swap (same label, other TLD) + typo detection over registrable domains |
+| [weighted.go](weighted.go) | v0.2 — `NearestWeighted`: confusability-weighted OSA (caller-supplied per-class substitution cost) |
+| [index.go](index.go) | v0.2 — `Set.Index`: a BK-tree for sublinear *exact* nearest lookup on a large target list |
 | [doc.go](doc.go) | package doc — the name metaphor (detects, not generates) and the one-question scope |
-| [app/twist/](app/twist/main.go) | the CLI — `near` · `version` |
+| [app/twist/](app/twist/main.go) | the CLI — `near` (`-index`) · `domain` · `version` |
 
 ## Notes
 
