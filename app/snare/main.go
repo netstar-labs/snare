@@ -1,9 +1,9 @@
-// Command twist detects typosquats by edit distance: given a list of target
+// Command snare detects typosquats by edit distance: given a list of target
 // strings, it reports each query's nearest target within a small edit budget.
 //
-//	twist near -t <targets-file> [-all] [-index] [queries...]   # nearest target per query (stdin if no args)
-//	twist domain -t <brands-file> [-all] [domains...]           # tld-swap / typo detection over registrable domains
-//	twist version
+//	snare near -t <targets-file> [-all] [-index] [queries...]   # nearest target per query (stdin if no args)
+//	snare domain -t <brands-file> [-all] [domains...]           # tld-swap / typo detection over registrable domains
+//	snare version
 //
 // Targets are one per line. Queries are the command arguments, or one per line on
 // stdin if none are given. Each near-miss prints as: query <tab> nearest <tab> dist.
@@ -19,10 +19,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/netstar-labs/twist"
+	"github.com/netstar-labs/snare"
 )
 
-// stamped by build/twist via -ldflags -X.
+// stamped by build/snare via -ldflags -X.
 var (
 	version = "dev"
 	build   = "none"
@@ -39,18 +39,18 @@ func main() {
 	case "domain":
 		err = domainCmd(os.Args[2:])
 	case "version", "-version", "--version", "-v":
-		fmt.Printf("twist %s (%s)\n", version, build)
+		fmt.Printf("snare %s (%s)\n", version, build)
 	default:
 		usage()
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "twist:", err)
+		fmt.Fprintln(os.Stderr, "snare:", err)
 		os.Exit(1)
 	}
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: twist <near|domain|version> [flags] [queries...]")
+	fmt.Fprintln(os.Stderr, "usage: snare <near|domain|version> [flags] [queries...]")
 	os.Exit(2)
 }
 
@@ -68,7 +68,7 @@ func near(args []string) error {
 	if err != nil {
 		return err
 	}
-	s := twist.New(targets)
+	s := snare.New(targets)
 	// nearest is Set.Nearest, or the equivalent BK-tree lookup with -index — identical
 	// (target, dist, ok), sublinear instead of a bucket scan for a large target list.
 	nearest := s.Nearest

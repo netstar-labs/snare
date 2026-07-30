@@ -8,12 +8,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/netstar-labs/twist"
+	"github.com/netstar-labs/snare"
 )
 
 // domainCmd reports, for each input domain, whether it is a tld-swap or an
 // edit-distance typo of one of the brand registrable domains in -t (the v0.2
-// [twist.DomainSet]). Each hit prints as: domain <tab> kind <tab> brand <tab> dist.
+// [snare.DomainSet]). Each hit prints as: domain <tab> kind <tab> brand <tab> dist.
 // A domain with no hit is skipped unless -all is set, which marks it "-".
 func domainCmd(args []string) error {
 	fs := flag.NewFlagSet("domain", flag.ExitOnError)
@@ -28,7 +28,7 @@ func domainCmd(args []string) error {
 	if err != nil {
 		return err
 	}
-	d := twist.NewDomainSet(brands)
+	d := snare.NewDomainSet(brands)
 
 	w := bufio.NewWriter(os.Stdout)
 	defer w.Flush()

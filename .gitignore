@@ -20,9 +20,9 @@ testdata/
 docs/plan/
 
 # binaries built at repo root
-/twist
+/snare
 
-# build/ tracks only the build script (build/twist); its output is not tracked
+# build/ tracks only the build script (build/snare); its output is not tracked
 build/install/
 build/bin/
 build/host

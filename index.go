@@ -1,4 +1,4 @@
-package twist
+package snare
 
 // Index is a BK-tree over a [Set]'s targets that answers the same near-match query as
 // [Set.Nearest] in sublinear time, for corpora past the tens-of-thousands crossover

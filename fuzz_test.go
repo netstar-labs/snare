@@ -1,4 +1,4 @@
-package twist
+package snare
 
 import "testing"
 
