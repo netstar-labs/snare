@@ -7,12 +7,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/netstar-labs/twist"
+	"github.com/netstar-labs/snare"
 )
 
 func main() {
 	targets := []string{"paypal", "google", "amazon", "apple", "microsoft"}
-	s := twist.New(targets)
+	s := snare.New(targets)
 
 	fmt.Printf("targets: %v\n\n", targets)
 
@@ -23,7 +23,7 @@ func main() {
 		{"papyal", "adjacent transposition"},
 		{"gooogle", "an extra inserted letter"},
 		{"paypal", "exact brand — the target itself, not a squat"},
-		{"paypal-secure", "combosquat — far past the edit budget, not twist's job"},
+		{"paypal-secure", "combosquat — far past the edit budget, not snare's job"},
 		{"random", "nothing close"},
 	}
 

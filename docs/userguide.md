@@ -1,11 +1,11 @@
-# twist — user guide
+# snare — user guide
 
 ## Library
 
 ```go
-import "github.com/netstar-labs/twist"
+import "github.com/netstar-labs/snare"
 
-s := twist.New([]string{"paypal", "google", "amazon", "apple", "microsoft"})
+s := snare.New([]string{"paypal", "google", "amazon", "apple", "microsoft"})
 
 s.Nearest("paypa1")        // ("paypal", 1, true)  — substitution l -> 1
 s.Nearest("papyal")        // ("paypal", 1, true)  — adjacent transposition
@@ -31,10 +31,10 @@ accented or multibyte character is one edit, not several bytes.
 
 ### Contract and cost
 
-- **twist normalizes nothing.** It compares the raw query against the raw targets.
+- **snare normalizes nothing.** It compares the raw query against the raw targets.
   The caller normalizes first — lowercase, strip to eTLD+1, IDNA-decode, whatever the
-  domain rules require — and feeds twist the already-normalized strings.
-- **twist is data-agnostic.** Any `[]string` is a valid target list; there is no
+  domain rules require — and feeds snare the already-normalized strings.
+- **snare is data-agnostic.** Any `[]string` is a valid target list; there is no
   brand-specific logic. The consumer owns the target projection.
 - A `Set` is read-only after `New` and **safe for concurrent `Nearest` calls**; each
   call allocates a single scratch buffer and touches no shared state.
@@ -43,25 +43,25 @@ accented or multibyte character is one edit, not several bytes.
 
 ## CLI
 
-Build: `go build -o twist ./app/twist` (standalone: `GOWORK=off`).
+Build: `go build -o snare ./app/snare` (standalone: `GOWORK=off`).
 
 ```sh
 # targets one per line; queries as arguments
-twist near -t targets.txt paypa1 papyal paypal
+snare near -t targets.txt paypa1 papyal paypal
 #   paypa1  paypal  1
 #   papyal  paypal  1
 #   (paypal is an exact target — skipped, not a squat)
 
 # queries one per line on stdin when no arguments are given
-printf 'paypa1\npapyal\n' | twist near -t targets.txt
+printf 'paypa1\npapyal\n' | snare near -t targets.txt
 
 # also print the misses, marked with -
-twist near -t targets.txt -all paypa1 paypal random
+snare near -t targets.txt -all paypa1 paypal random
 #   paypa1  paypal  1
 #   paypal  -       -
 #   random  -       -
 
-twist version
+snare version
 ```
 
 Output is one tab-separated line per near-miss: `query <tab> nearest <tab> dist`.
@@ -75,14 +75,14 @@ Queries with no near-miss are skipped unless `-all` is set, which prints them wi
 
 ## Build & deploy
 
-`build/twist [--cli] [user@host]` cross-compiles the CLI to `linux/amd64` with a
+`build/snare [--cli] [user@host]` cross-compiles the CLI to `linux/amd64` with a
 `git describe` version stamp, packages a self-contained installer + `.tgz`, and —
 given a host — scp's it over and installs the binary to `/usr/local/bin` via ssh.
 With no host it just builds the package under `build/install/`.
 
-## When to reach past twist
+## When to reach past snare
 
-twist is brute force plus length-bucket pruning — microsecond-class over a curated
+snare is brute force plus length-bucket pruning — microsecond-class over a curated
 list of hundreds to low thousands of targets. If the target list or query volume
 grows large enough that `Nearest` shows up in a profile, reach for the v0.2 BK-tree
 `Set.Index` — the same exact result, sublinear lookup (`bench_test.go` at 1e2 / 1e3 /

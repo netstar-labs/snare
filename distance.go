@@ -1,4 +1,4 @@
-package twist
+package snare
 
 // editDistance computes the Optimal String Alignment (OSA) distance between rune
 // slices a and b, bounded by k. OSA is restricted Damerau-Levenshtein: insertions,

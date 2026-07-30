@@ -1,7 +1,7 @@
-# twist — architecture
+# snare — architecture
 
-A flat library (`package twist`) at the repo root, one concern per file, plus a thin
-CLI under `app/twist`. The pipeline is: target list → dedup + length buckets (the
+A flat library (`package snare`) at the repo root, one concern per file, plus a thin
+CLI under `app/snare`. The pipeline is: target list → dedup + length buckets (the
 `Set`) → query compared only against in-band targets → bounded edit distance per
 candidate → nearest within the budget.
 
@@ -48,7 +48,7 @@ which plain Levenshtein would score as two substitutions.
   distance when it is `≤ k`, and `k+1` (a sentinel meaning "farther than k")
   otherwise.
 
-## The index: dedup + length buckets (`twist.go`)
+## The index: dedup + length buckets (`snare.go`)
 
 `New` builds the `Set`: it drops empty strings and exact duplicates (first
 occurrence wins) and buckets the survivors by rune length — a `map[int][]entry`.
@@ -82,7 +82,7 @@ Let *m* = query length, *L* = target length, *B* = number of in-band targets.
 
 - **`editDistance`** is O(*m*·*L*) worst case, but the length prune caps *L* at
   *m*+*k* and the row-min abort usually stops after a handful of rows for a
-  non-match; a rejected candidate is effectively O(*m*). twist is built for short
+  non-match; a rejected candidate is effectively O(*m*). snare is built for short
   labels (caller-normalized host/brand labels); the quadratic term only bites if a
   caller curates a very long target and queries a length-matched near-miss of it —
   atypical and self-inflicted, not an attacker surface.
@@ -100,31 +100,31 @@ and confusability-weighted `NearestWeighted` — each in its own file, the core 
 Two tempting extensions remain out on purpose:
 
 - **No combosquat / token logic.** `paypal-secure` is a brand token plus a keyword —
-  a different signal (token match, not edit distance) — and is correctly not a twist
+  a different signal (token match, not edit distance) — and is correctly not a snare
   hit. Combosquat detection belongs to a token-aware consumer (or `twister`), not this metric.
-- **No skeleton fold.** twist is edit-distance only; homoglyph look-alikes are the
+- **No skeleton fold.** snare is edit-distance only; homoglyph look-alikes are the
   Unicode UTS-39 *skeleton* metric, a different distance owned by the sibling `unmask`.
   `NearestWeighted` can price a confusable substitution cheaply, but the skeleton JOIN
   itself lives in `unmask`, not here.
 
 ## Consumer wiring (future work)
 
-twist imports none of its consumers and they wire it in a few lines, each owning its
+snare imports none of its consumers and they wire it in a few lines, each owning its
 own target projection and query normalization:
 
 | Consumer | Signal | Wiring |
 |---|---|---|
-| Mail-capture detector | a `typosquat_suspect` feature | normalize (eTLD+1), project a brand target list, then `twist.New(t).Nearest(host)`. Adding a scored feature to a trained model triggers a retrain + model-version bump on the consumer side, not twist. |
+| Mail-capture detector | a `typosquat_suspect` feature | normalize (eTLD+1), project a brand target list, then `snare.New(t).Nearest(host)`. Adding a scored feature to a trained model triggers a retrain + model-version bump on the consumer side, not snare. |
 | Identity / corpus service | corpus near-miss | on a lookup miss, `Nearest(eTLD+1, corpusDomains)`; a hit demotes/attributes, never keyword-promotes — compatible with a one-way-trust rule. |
 
 Homoglyph matching (the UTS-39 skeleton metric) is intentionally separate — a
-different distance for a different problem. twist is edit-distance only.
+different distance for a different problem. snare is edit-distance only.
 
 ## Layout
 
 | File | Purpose |
 |---|---|
-| [twist.go](../twist.go) | `Set`, `New` (dedup + length buckets), `Nearest`, and the `kFor` budget policy |
+| [snare.go](../snare.go) | `Set`, `New` (dedup + length buckets), `Nearest`, and the `kFor` budget policy |
 | [distance.go](../distance.go) | `editDistance` — bounded OSA over runes, three-row DP with length and row-min prunes |
 | [doc.go](../doc.go) | package doc — the name metaphor and the one-question scope |
-| [app/twist/](../app/twist/main.go) | the CLI — `near` · `version` |
+| [app/snare/](../app/snare/main.go) | the CLI — `near` · `version` |

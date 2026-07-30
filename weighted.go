@@ -1,4 +1,4 @@
-package twist
+package snare
 
 import (
 	"math"
@@ -14,7 +14,7 @@ import (
 // point of the type — the caller wires it. It is typically built from unmask's
 // confusable classes plus twister's leet and keyboard tables: a homoglyph, leet, or
 // keyboard-adjacent swap returns a small fraction (say 0.3–0.5) and any other swap
-// returns 1.0. twist does not import those packages; it only calls Sub. Sub is invoked
+// returns 1.0. snare does not import those packages; it only calls Sub. Sub is invoked
 // only for differing runes (an identical rune costs 0), must be non-negative, and may
 // be nil — a nil Sub defaults to uniform cost 1.0, making NearestWeighted a float
 // mirror of [Set.Nearest].

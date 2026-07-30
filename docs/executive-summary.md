@@ -1,10 +1,10 @@
-# twist — executive summary
+# snare — executive summary
 
 **What it is.** A small, dependency-free Go library that detects typosquats by edit
 distance. Build a `Set` over a list of target strings, then query for the nearest
 target within a small edit budget. It is the edit-distance sibling of `ditto` (which
 finds near-duplicate documents by SimHash): the same build-index-then-query shape,
-Damerau-Levenshtein (OSA) instead of a locality-sensitive hash. twist *detects*
+Damerau-Levenshtein (OSA) instead of a locality-sensitive hash. snare *detects*
 typosquats — query → nearest target — the counter to `twister`, which *generates* the
 look-alike domains to hunt for.
 
@@ -12,7 +12,7 @@ look-alike domains to hunt for.
 `paypa1`, `papyal`, `gooogle`, `micros0ft` — the workhorse of phishing and brand
 abuse. Catching it means asking, of every untrusted string, "is this a near-miss for
 something I protect?" Done naively that is a distance computation against every
-target, which is slow and does not scale. twist makes the question cheap enough to
+target, which is slow and does not scale. snare makes the question cheap enough to
 ask inline, on every message or lookup, against a curated brand list.
 
 **What you get.**
@@ -29,12 +29,12 @@ ask inline, on every message or lookup, against a curated brand list.
 - **No dependencies, no state, no configuration** — standard library only, a pure
   function of its inputs, safe for concurrent queries.
 
-**Where it fits.** twist is the *algorithm* layer, coupled to nothing. It takes a
+**Where it fits.** snare is the *algorithm* layer, coupled to nothing. It takes a
 raw `[]string` and a raw query and returns nearest + distance — data-agnostic (feed
 it any target list) and normalization-agnostic (the caller normalizes first).
 Consumers wire it in a few lines and own their own target projection — e.g. a mail-capture detector as a
 `typosquat_suspect` feature over a brand corpus, or an identity service as a corpus near-miss
-on the identity side. Each supplies the target list and the normalized query; twist
+on the identity side. Each supplies the target list and the normalized query; snare
 supplies only the distance.
 
 **What it is not.** Not a combosquat detector (`paypal-secure` is a brand token plus
