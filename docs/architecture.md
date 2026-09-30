@@ -126,5 +126,8 @@ different distance for a different problem. snare is edit-distance only.
 |---|---|
 | [snare.go](../snare.go) | `Set`, `New` (dedup + length buckets), `Nearest`, and the `kFor` budget policy |
 | [distance.go](../distance.go) | `editDistance` — bounded OSA over runes, three-row DP with length and row-min prunes |
+| [domainset.go](../domainset.go) | `DomainSet` — the v0.2 domain-level tld-swap + typo check, `multiSuffix`/`splitDomain` |
+| [index.go](../index.go) | `Set.Index` — the v0.2 BK-tree for sublinear exact-distance lookup |
+| [weighted.go](../weighted.go) | `NearestWeighted` — the v0.2 confusability-weighted distance, library-only (no CLI surface) |
 | [doc.go](../doc.go) | package doc — the name metaphor and the one-question scope |
-| [app/snare/](../app/snare/main.go) | the CLI — `near` · `version` |
+| [app/snare/](../app/snare/main.go) | the CLI — `near` · `domain` · `version` |
