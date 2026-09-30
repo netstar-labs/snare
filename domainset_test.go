@@ -43,21 +43,38 @@ func TestDomainSetCheck(t *testing.T) {
 }
 
 // TestSplitDomain checks the registrable label / TLD split, including the embedded
-// multi-part suffixes, subdomain stripping, case folding, and the no-TLD fallback.
+// multi-part suffixes, subdomain stripping, case folding, the no-TLD fallback, and the
+// ambiguous flag: false whenever the split is trustworthy (2-label, or matched a listed
+// multiSuffix entry — including a suffix-second-level WORD as the label via a listed
+// suffix, e.g. "co.co.uk"), true only for the risky 3+-label unlisted-suffix fallback.
 func TestSplitDomain(t *testing.T) {
-	cases := []struct{ in, label, tld string }{
-		{"google.com", "google", "com"},
-		{"google.co.uk", "google", "co.uk"},
-		{"GOOGLE.COM", "google", "com"},
-		{"login.paypal.com", "paypal", "com"},
-		{"example.com.au", "example", "com.au"},
-		{"root-dot.com.", "root-dot", "com"},
-		{"single", "single", ""},
-		{"", "", ""},
+	cases := []struct {
+		in         string
+		label, tld string
+		ambiguous  bool
+	}{
+		{"google.com", "google", "com", false},
+		{"google.co.uk", "google", "co.uk", false},
+		{"GOOGLE.COM", "google", "com", false},
+		{"login.paypal.com", "paypal", "com", true}, // 3-label fallback; label isn't a suffix word, so not dropped
+		{"example.com.au", "example", "com.au", false},
+		{"root-dot.com.", "root-dot", "com", false},
+		{"single", "single", "", false},
+		{"", "", "", false},
+		// A listed suffix whose second level is itself a suffixSecondLevel word: the
+		// split is via the trusted multiSuffix branch, so it is NOT ambiguous even
+		// though the label reads "co" — this is the audit regression (see
+		// TestDomainSetListedSuffixSecondLevelLabelNotDropped).
+		{"co.co.uk", "co", "co.uk", false},
+		{"id.id.au", "id", "id.au", false},
+		// An unlisted 3-label suffix takes the risky fallback and IS ambiguous.
+		{"example.co.kr", "co", "kr", true},
 	}
 	for _, c := range cases {
-		if label, tld := splitDomain(c.in); label != c.label || tld != c.tld {
-			t.Errorf("splitDomain(%q) = (%q, %q), want (%q, %q)", c.in, label, tld, c.label, c.tld)
+		label, tld, ambiguous := splitDomain(c.in)
+		if label != c.label || tld != c.tld || ambiguous != c.ambiguous {
+			t.Errorf("splitDomain(%q) = (%q, %q, %v), want (%q, %q, %v)",
+				c.in, label, tld, ambiguous, c.label, c.tld, c.ambiguous)
 		}
 	}
 }

@@ -62,15 +62,26 @@ snare near -t targets.txt -all paypa1 paypal random
 #   random  -       -
 
 snare version
+
+# domain-level check (v0.2): -t is a file of registrable brand domains, not bare labels
+snare domain -t brands.txt paypal.net login.paypal.com
+#   paypal.net        tld-swap  paypal.com  0
+#   (login.paypal.com resolves to the registrable domain paypal.com, an exact
+#    brand — not a squat; skipped unless -all is set)
+
+# also print the misses, marked with -
+snare domain -t brands.txt -all paypal.net paypal.com
 ```
 
-Output is one tab-separated line per near-miss: `query <tab> nearest <tab> dist`.
-Queries with no near-miss are skipped unless `-all` is set, which prints them with a
-`-` in the nearest and distance columns.
+Output is one tab-separated line per near-miss: `query <tab> nearest <tab> dist`
+for `near`, and `domain <tab> kind <tab> brand <tab> dist` for `domain`. Both
+commands skip domains with no hit unless `-all` is set, which prints them with a
+`-` in the remaining columns.
 
 | Command | Flags | Meaning |
 |---|---|---|
 | `near` | `-t <file>` (required), `-all` | print `query<tab>nearest<tab>dist` for each near-miss; queries from args or stdin |
+| `domain` | `-t <file>` (required), `-all` | print `domain<tab>kind<tab>brand<tab>dist` for each tld-swap/typo hit against a `snare.DomainSet` of registrable brand domains; domains from args or stdin |
 | `version` | — | binary version + build revision |
 
 ## Build & deploy

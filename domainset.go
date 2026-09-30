@@ -69,16 +69,18 @@ type DomainSet struct {
 // an eTLD, e.g. "paypal.com" or "google.co.uk". Each brand's label is registered for
 // typo detection and its TLD recorded as legitimate for that label; a label a brand
 // legitimately uses under several TLDs must list each brand (google.com AND google.de)
-// or the unlisted TLDs read as swaps. Empty, malformed, and unsafely-splittable
-// entries are skipped — the last being a brand under a multi-part suffix multiSuffix
-// does not list (see [suspectMisSplit]). The input slice is neither retained nor modified.
+// or the unlisted TLDs read as swaps. Empty entries and unsafely-splittable entries are
+// skipped — the latter being a brand under a multi-part suffix multiSuffix does not
+// list (see [suspectMisSplit]). NewDomainSet does not validate label/TLD syntax beyond
+// that; callers are responsible for passing syntactically valid registrable domains.
+// The input slice is neither retained nor modified.
 func NewDomainSet(brands []string) *DomainSet {
 	legit := make(map[string]map[string]struct{}, len(brands))
 	brand := make(map[string]string, len(brands))
 	var labels []string
 	for _, b := range brands {
-		label, tld := splitDomain(b)
-		if label == "" || suspectMisSplit(b, label) {
+		label, tld, ambiguous := splitDomain(b)
+		if label == "" || suspectMisSplit(label, ambiguous) {
 			continue
 		}
 		tlds := legit[label]
@@ -91,10 +93,12 @@ func NewDomainSet(brands []string) *DomainSet {
 		if tld != "" {
 			tlds[tld] = struct{}{}
 		}
-		// Keep the lexicographically smallest brand string as the reported brand so a
-		// label shared across several brands resolves deterministically.
-		if cur, ok := brand[label]; !ok || strings.ToLower(b) < cur {
-			brand[label] = strings.ToLower(b)
+		// Keep the lexicographically (case-insensitively) smallest brand string as the
+		// reported brand so a label shared across several brands resolves
+		// deterministically — stored as passed, so Result.Brand's "exactly as passed"
+		// promise holds regardless of which candidate wins the tie-break.
+		if cur, ok := brand[label]; !ok || strings.ToLower(b) < strings.ToLower(cur) {
+			brand[label] = b
 		}
 	}
 	return &DomainSet{labels: New(labels), legit: legit, brand: brand}
@@ -109,7 +113,7 @@ func NewDomainSet(brands []string) *DomainSet {
 // A label that is not an exact brand label is delegated to [Set.Nearest]; a near-miss
 // within budget is a KindTypo (its TLD is not examined — a typo is a typo on any TLD).
 func (d *DomainSet) Check(domain string) (Result, bool) {
-	label, tld := splitDomain(domain)
+	label, tld, _ := splitDomain(domain)
 	if label == "" {
 		return Result{}, false
 	}
@@ -158,27 +162,34 @@ var multiSuffix = map[string]struct{}{
 
 // suffixSecondLevel is the set of labels that appear as the second level of a
 // multi-part public suffix (the "co" in "co.uk", the "com" in "com.au"). When
-// splitDomain hands one of these back as a registrable label for a 3+-label domain, the
-// domain almost certainly used a multi-part suffix multiSuffix does not list, so the
-// split is unreliable — see [suspectMisSplit].
-var suffixSecondLevel = map[string]struct{}{
-	"co": {}, "com": {}, "net": {}, "org": {}, "gov": {}, "edu": {},
-	"ac": {}, "or": {}, "ne": {}, "go": {}, "govt": {}, "id": {},
-	"ltd": {}, "plc": {}, "sch": {}, "me": {},
-}
+// splitDomain hands one of these back as a registrable label from its ambiguous
+// fallback path, the domain almost certainly used a multi-part suffix multiSuffix does
+// not list, so the split is unreliable — see [suspectMisSplit]. Derived from multiSuffix
+// once at init, rather than hand-maintained separately, so the two can never drift.
+var suffixSecondLevel = func() map[string]struct{} {
+	m := make(map[string]struct{}, len(multiSuffix))
+	for suffix := range multiSuffix {
+		second, _, _ := strings.Cut(suffix, ".")
+		m[second] = struct{}{}
+	}
+	return m
+}()
 
-// suspectMisSplit reports whether splitDomain likely mis-parsed domain: its label came
-// out as a known public-suffix second level (co, com, …) from a 3+-label domain whose
-// suffix multiSuffix does not recognize. Such a brand cannot be split safely without a
-// real PSL, so NewDomainSet drops it rather than register it under a bogus label — which
-// would let unrelated domains under a sibling suffix (co.kr vs co.ke) read as tld-swaps.
-// A 2-label domain whose label is "co" (e.g. co.com) is the caller's own registration
-// and is kept.
-func suspectMisSplit(domain, label string) bool {
-	if _, bad := suffixSecondLevel[label]; !bad {
+// suspectMisSplit reports whether splitDomain likely mis-parsed the domain that
+// produced label: the split took the ambiguous 3+-label fallback path (see
+// [splitDomain]'s ambiguous result) AND label came out as a known public-suffix second
+// level (co, com, …) — the signature of a multi-part suffix multiSuffix does not list.
+// Such a brand cannot be split safely without a real PSL, so NewDomainSet drops it
+// rather than register it under a bogus label — which would let unrelated domains under
+// a sibling suffix (co.kr vs co.ke) read as tld-swaps. A split that matched a *listed*
+// multiSuffix entry is never ambiguous, however label reads: co.co.uk splits to label
+// "co" via the trusted co.uk entry, not the risky fallback, and is kept.
+func suspectMisSplit(label string, ambiguous bool) bool {
+	if !ambiguous {
 		return false
 	}
-	return strings.Count(strings.TrimSuffix(strings.ToLower(domain), "."), ".") >= 2
+	_, bad := suffixSecondLevel[label]
+	return bad
 }
 
 // splitDomain separates a domain into its registrable label and registrable TLD. The
@@ -186,18 +197,26 @@ func suspectMisSplit(domain, label string) bool {
 // final label alone (com); the registrable label is the single label immediately to its
 // left. Any further subdomains are dropped — login.paypal.com and paypal.com both yield
 // ("paypal", "com"). A trailing root dot is tolerated and input is lower-cased. A domain
-// with no dot has no TLD to compare and yields (itself, "").
-func splitDomain(domain string) (label, tld string) {
+// with no dot has no TLD to compare and yields (itself, "", false).
+//
+// ambiguous reports whether the split took the risky fallback: a 3+-label domain whose
+// final two labels did NOT match a listed multiSuffix entry, so the final label alone was
+// taken as the TLD on the (unverifiable) assumption that it is a single-label suffix
+// rather than the second level of an unlisted multi-part one. A 2-label domain, and any
+// split that matched a listed multiSuffix entry, is never ambiguous — see
+// [suspectMisSplit], which is the only caller that needs this bit.
+func splitDomain(domain string) (label, tld string, ambiguous bool) {
 	domain = strings.ToLower(strings.TrimSuffix(domain, "."))
 	labels := strings.Split(domain, ".")
 	n := len(labels)
 	if n < 2 {
-		return domain, ""
+		return domain, "", false
 	}
 	if n >= 3 {
 		if _, ok := multiSuffix[labels[n-2]+"."+labels[n-1]]; ok {
-			return labels[n-3], labels[n-2] + "." + labels[n-1]
+			return labels[n-3], labels[n-2] + "." + labels[n-1], false
 		}
+		return labels[n-2], labels[n-1], true
 	}
-	return labels[n-2], labels[n-1]
+	return labels[n-2], labels[n-1], false
 }
